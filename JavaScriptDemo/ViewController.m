@@ -21,8 +21,18 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
 
-//    [self ocToJs];
-    [self jsToOcBlock];
+//   1. oc -> js
+    [self ocToJs];
+
+//   2. js - oc
+//    [self jsToOcBlock];
+//    [self jsToOcProtocol];
+
+//   3. 异常捕获
+//    [self exceptionHadle];
+    
+
+//   4. 内存
 }
 
 //OC 调用 JS
@@ -30,6 +40,12 @@
 
     //1. JSContxt执行js代码
     JSContext *context = [[JSContext alloc] init];
+    [context evaluateScript:@"var sum = 1 + 2"];
+    JSValue *sum = context[@"sum"];
+//    JSValue *sum = [JSValue valueWithObject:@"sum" inContext:context];
+    NSLog(@"sum %d", sum.toInt32);
+    
+    ///
     NSString *jsPath = [[NSBundle mainBundle] pathForResource:@"test" ofType:@"js"];
     NSString *js = [NSString stringWithContentsOfFile:jsPath encoding:NSUTF8StringEncoding error:nil];
     [context evaluateScript:js];
@@ -61,6 +77,7 @@
     
     //1. JSContxt执行js代码
     JSContext *context = [[JSContext alloc] init];
+
     NSString *jsPath = [[NSBundle mainBundle] pathForResource:@"test" ofType:@"js"];
     NSString *js = [NSString stringWithContentsOfFile:jsPath encoding:NSUTF8StringEncoding error:nil];
     [context evaluateScript:js];
@@ -76,7 +93,6 @@
     NSLog(@"调用js方法");
     JSValue *value = [jsFuncation callWithArguments:@[@2, @3]];
     NSLog(@"计算结果： %zd", value.toInt32);
-    
     
     //2.
     //注册一个objc方法给js调用
@@ -99,6 +115,7 @@
 
     JSContext *context = [[JSContext alloc] init];
     
+    //1
     Person *person = [[Person alloc] init];
     context[@"person"] = person;
     
@@ -107,9 +124,30 @@
     
     JSValue *addValue = [context evaluateScript:@"person.addAB(1,2)"];
     NSLog(@"addValue = %zd",addValue.toInt32);
+    NSLog(@"sumValue = %zd",person.sum);
+
+    //宏转换
+    JSValue *addValue2 = [context evaluateScript:@"person.add(1,2)"];
+    NSLog(@"addValue2 = %zd",addValue2.toInt32);
+    NSLog(@"sumValue = %zd",person.sum);
     
-    JSValue *sumValue = context[@"sum"];
-    NSLog(@"sumValue = %zd",sumValue.toInt32);
+    
+    NSString *jsPath = [[NSBundle mainBundle] pathForResource:@"test" ofType:@"js"];
+    NSString *js = [NSString stringWithContentsOfFile:jsPath encoding:NSUTF8StringEncoding error:nil];
+    [context evaluateScript:js];
+    
+    //2.
+    JSValue *addValue3 = [context evaluateScript:@"jsProtocol(person)"];
+    NSLog(@"addValue3 = %zd",addValue3.toInt32);
+    NSLog(@"sumValue = %zd",person.sum);
+    
+    //3.
+    Person *otherPerson = [[Person alloc] init];
+    context[@"otherPerson"] = otherPerson;
+    JSValue *addValue4 = [context evaluateScript:@"jsOtherPersonProtocol()"];
+    NSLog(@"addValue4 = %zd",addValue4.toInt32);
+    NSLog(@"sumValue = %zd",otherPerson.sum);
+
     
 }
 
@@ -121,7 +159,7 @@
         NSLog(@"JS Error: %@",exception);
     };
     
-    [context evaluateScript:@"function multiply(value1, value2) { return value1 * value}"];
+    [context evaluateScript:@"function multiply(value1, value2) { return value1 * value"];
 }
 
 //内存问题
@@ -135,8 +173,7 @@
         NSLog(@"%@",[value toObject]);
     };
     
-    
-    //2.block引用了外部的对象，也会出现内存泄露
+    //2.block引用了外部JSValue的对象，也会出现内存泄露, value对context和他管理的js对象都是强引用，这个value被block所捕获，这边同样也会内存泄露，context是销毁不掉的。
     JSValue *value = [JSValue valueWithObject:@"ssss" inContext:jsContext];
     jsContext[@"log"] = ^(){
         NSLog(@"%@",value);

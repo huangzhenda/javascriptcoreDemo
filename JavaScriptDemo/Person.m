@@ -18,9 +18,14 @@
 
 - (NSInteger)addA:(NSInteger)a b:(NSInteger)b {
 
-    _sum = a + b;
-    return _sum;
+    self.sum += a + b;
+    return a + b;
 }
 
+- (NSInteger)add:(NSInteger)a b:(NSInteger)b {
+    
+    self.sum += a + b;
+    return a + b;
+}
 
 @end

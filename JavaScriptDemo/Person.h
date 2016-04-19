@@ -16,6 +16,9 @@
 
 - (NSString *)whatYouName;
 
+//用宏转换下，将JS函数名字指定为add；
+JSExportAs(add, - (NSInteger)add:(NSInteger)a b:(NSInteger)b);
+
 - (NSInteger)addA:(NSInteger)a b:(NSInteger)b;
 
 @end
